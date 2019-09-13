@@ -1,0 +1,6 @@
+Warning[205] ..\..\..\..\UCU\SEGUNDO_AÒO\ORGANIZACIONCOMPUTADORES\LABORATORIOS\LAB 0\CÛDIGO PR·CTICA 0.ASM 19 : Found directive in column 1. (cblock)
+Warning[205] ..\..\..\..\UCU\SEGUNDO_AÒO\ORGANIZACIONCOMPUTADORES\LABORATORIOS\LAB 0\CÛDIGO PR·CTICA 0.ASM 23 : Found directive in column 1. (ENDC)
+Warning[205] ..\..\..\..\UCU\SEGUNDO_AÒO\ORGANIZACIONCOMPUTADORES\LABORATORIOS\LAB 0\CÛDIGO PR·CTICA 0.ASM 26 : Found directive in column 1. (org)
+Message[302] ..\..\..\..\UCU\SEGUNDO_AÒO\ORGANIZACIONCOMPUTADORES\LABORATORIOS\LAB 0\CÛDIGO PR·CTICA 0.ASM 30 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] ..\..\..\..\UCU\SEGUNDO_AÒO\ORGANIZACIONCOMPUTADORES\LABORATORIOS\LAB 0\CÛDIGO PR·CTICA 0.ASM 32 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Warning[205] ..\..\..\..\UCU\SEGUNDO_AÒO\ORGANIZACIONCOMPUTADORES\LABORATORIOS\LAB 0\CÛDIGO PR·CTICA 0.ASM 52 : Found directive in column 1. (END)

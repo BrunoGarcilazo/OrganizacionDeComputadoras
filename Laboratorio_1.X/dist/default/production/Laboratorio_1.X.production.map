@@ -1,0 +1,73 @@
+MPLINK 5.09, LINKER
+Linker Map File - Created Fri Sep 13 19:57:23 2019
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+                   .org_0       code   0x000000    program   0x000106
+                   .cinit    romdata   0x000083    program   0x000004
+.config_2007_BUILD/DEFAULT/PRODUCTION/MAIN.O       code   0x002007    program   0x000002
+.config_2008_BUILD/DEFAULT/PRODUCTION/MAIN.O       code   0x002008    program   0x000002
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x000084      
+                            0x002007    0x002008      
+            135 out of 8455 program addresses used, program memory utilization is 1%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                    Delay   0x00006b    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                 Delay3ms   0x000076    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+               DelayNuevo   0x000064    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                  Delay_0   0x00006f    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+             _.org_0_0018   0x000018    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+             _.org_0_0069   0x000069    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+             _.org_0_0070   0x000070    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+             _.org_0_0073   0x000073    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+               __destello   0x00007a    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                   __main   0x000015    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                    loop1   0x000020    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                    loop2   0x000027    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                    loop3   0x00002e    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                     main   0x000000    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+               presionado   0x00004f    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+              presionado2   0x000056    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+              presionado3   0x00005d    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                   sumar1   0x000035    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                  sumar10   0x00003d    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                 sumar100   0x000046    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                     main   0x000000    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                   __main   0x000015    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+             _.org_0_0018   0x000018    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                    loop1   0x000020    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                    loop2   0x000027    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                    loop3   0x00002e    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                   sumar1   0x000035    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                  sumar10   0x00003d    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                 sumar100   0x000046    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+               presionado   0x00004f    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+              presionado2   0x000056    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+              presionado3   0x00005d    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+               DelayNuevo   0x000064    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+             _.org_0_0069   0x000069    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                    Delay   0x00006b    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                  Delay_0   0x00006f    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+             _.org_0_0070   0x000070    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+             _.org_0_0073   0x000073    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+                 Delay3ms   0x000076    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+               __destello   0x00007a    program     static C:\Ucu\Segundo_Año\OrganizacionComputadores\Laboratorios\Laboratorio_1.X\main.asm
+
+
