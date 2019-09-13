@@ -1,5 +1,5 @@
-#**OrganizacionDeComputadoras**
-##Grupo conformado por:
+# **OrganizacionDeComputadoras**
+## Grupo conformado por:
 Bruno Humberto "el mago tenebroso"
 Tomas Abreu "el legolas"
 Felipe Mestre "el resorte"
