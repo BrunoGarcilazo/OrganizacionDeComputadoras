@@ -18,6 +18,7 @@ d0
 d1
 d2
 contadorLuces
+iterarLuces
 endc
 
 ;Organizacion de la memoria de programacion
@@ -39,6 +40,7 @@ main
     banksel contadorLuces
     movlw D'10'
     movwf contadorLuces
+    
 ;    goto prueba
 ;prueba
 ;    banksel PORTB
@@ -80,10 +82,43 @@ loop3
     btfsc PORTB,2
     goto loop1
     goto sumar100
+luces
+    banksel PORTD
+    clrf PORTD
+    banksel iterarLuces
+    movlw D'8'
+    movwf iterarLuces
+    
+    movlw D'5'
+    call DelayNuevo
+    RLF PORTD
+    DECFSZ iterarLuces,f
+    goto $-4
+    
+    movlw D'8'
+    movwf iterarLuces
+    
+    movlw D'5'
+    call DelayNuevo
+    RRF PORTD
+    DECFSZ iterarLuces,f
+    goto $-4
+    
+    banksel STATUS
+    bcf STATUS,0
+    return
+
 sumar1 
     banksel sum
-    incf sum,f
-    movf sum, w
+    movf sum,w
+    ADDLW D'1'
+    movwf sum
+    banksel STATUS
+    btfss STATUS,0
+    btfsc STATUS,0
+    call luces
+    banksel sum
+    movf sum,w
     banksel PORTD
     movwf PORTD 
     goto presionado
@@ -92,6 +127,12 @@ sumar10
     movf sum,w
     ADDLW D'10'
     movwf sum
+    banksel STATUS
+    btfss STATUS,0
+    btfsc STATUS,0
+    call luces
+    banksel sum
+    movf sum,w
     banksel PORTD
     movwf PORTD 
     goto presionado2
@@ -100,6 +141,12 @@ sumar100
     movf sum,w
     ADDLW D'100'
     movwf sum
+    banksel STATUS
+    btfss STATUS,0
+    btfsc STATUS,0
+    call luces
+    banksel sum
+    movf sum,w
     banksel PORTD
     movwf PORTD 
     goto presionado3
