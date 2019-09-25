@@ -78,8 +78,7 @@ loop1
     btfsc PORTB,0
     goto loop1
     goto sumarTiempo
-    goto mostrarTiempo
-    goto loop1
+
  
 activarInterrupciones
     banksel T1CON ;Configuracion del registro de timer 1 (Ver dataSheet).
@@ -107,12 +106,14 @@ sumarTiempo
     movf cuentaRegresiva,w
     ADDLW D'5'
     movwf cuentaRegresiva
+    goto presionado
  
 mostrarTiempo
     banksel cuentaRegresiva
     movf cuentaRegresiva,w
     banksel PORTD
     movwf PORTD
+    return
     
 presionado
     call Delay
@@ -121,7 +122,7 @@ presionado
     btfss PORTB,0
     goto presionado
     goto loop1
-        
+    
 interrupt
     banksel TMR1H
     clrf TMR1H
@@ -135,7 +136,7 @@ interrupt
     bsf INTCON,6    ;Configura el peie
     banksel cuentaRegresiva
     decf cuentaRegresiva
-    goto mostrarTiempo
+    call mostrarTiempo
     retfie
     
 END
