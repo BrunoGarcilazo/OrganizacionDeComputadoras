@@ -12,7 +12,7 @@
  __CONFIG _CONFIG2, _BOR4V_BOR21V & _WRT_OFF
  
 ;Organizacion de la memoria de datos 
-cblock 0x20	;Comienzo a escribir la memoria de datos en la dirección 0x20
+cblock 0x20	;Comienzo a escribir la memoria de datos en la direcciÃ³n 0x20
 ;Variables usadas por los delays
 d0
 d1
@@ -83,14 +83,14 @@ loop1
  
 activarInterrupciones
     banksel T1CON ;Configuracion del registro de timer 1 (Ver dataSheet).
-    movlw b'010110101'
+    movlw b'01110101'
     movwf T1CON
     
     banksel PIE1 ;Configura el pie.
     bsf PIE1,0
     
-    bsf INTCON,6    ;Configura el Gie.
-    bsf INTCON,7    ;Configura el peie
+    bsf INTCON,6    ;Configura el peie
+    bsf INTCON,7    ;Configura el Gie.
     
 Delay ;49993 cycles
     movlw 0x0E
@@ -131,7 +131,7 @@ interrupt
     banksel PIR1
     bcf PIR1,0	;Ponemos a cero el registro TMR1IF
     
-    bsf INTCON,7    ;Configura el peie
+    bsf INTCON,6    ;Configura el peie
     banksel cuentaRegresiva
     decf cuentaRegresiva
     goto mostrarTiempo
