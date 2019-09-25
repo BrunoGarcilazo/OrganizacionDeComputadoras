@@ -66,7 +66,7 @@ main
     movwf limiteParaSetear
     movwf cuentaRegresiva   
     clrw
-    goto activarInterrupciones
+    call activarInterrupciones
     goto loop1
     
 loop1
@@ -91,6 +91,7 @@ activarInterrupciones
     
     bsf INTCON,6    ;Configura el peie
     bsf INTCON,7    ;Configura el Gie.
+    return
     
 Delay ;49993 cycles
     movlw 0x0E
