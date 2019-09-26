@@ -12,7 +12,7 @@
  __CONFIG _CONFIG2, _BOR4V_BOR21V & _WRT_OFF
  
 ;Organizacion de la memoria de datos 
-cblock 0x20	;Comienzo a escribir la memoria de datos en la dirección 0x20
+cblock 0x20	;Comienzo a escribir la memoria de datos en la direccion 0x20
 
 d1                  ;Variable usada para el Delay
 d2                  ;Variable usada para el Delay
@@ -176,7 +176,7 @@ mostrarTiempo
     call encenderLeds
     return
 
-;Funcion para estar en loop, hasta que el usuario suerte el boton seleccionado, ésto se utiliza para que no hayan
+;Funcion para estar en loop, hasta que el usuario suelte el boton seleccionado, esto se utiliza para que no hayan
 ;errores en ingreso de datos
 presionado
     call Delay
