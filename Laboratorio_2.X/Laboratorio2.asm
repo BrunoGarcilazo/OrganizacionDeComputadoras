@@ -51,6 +51,7 @@ main
     ;banksel PORTD
     ;clrf PORTD
     
+    goto prueba
     ;Ponemos todos los botones como entrada
     banksel TRISB
     movlw b'00111111'
@@ -62,14 +63,15 @@ main
     goto iniciar
 
 
-;    goto prueba
+    goto prueba
 ;la funcion prueba muestra el correcto funcionamiento de los leds con sus respectivos botones
-;prueba  
-;    banksel PORTB
-;    movf PORTB, w
-;    banksel PORTD
-;    movwf PORTD
-;    goto prueba
+prueba  
+    MOVLW B'00010111'
+    RRF W,0
+    
+    banksel PORTD
+    movwf PORTD
+    goto prueba
 
 ;Funcion que, deja a el pic en un loop hasta que el usuario presiona el Segundo Boton de la Placa (IZQ a DER)
 ;Al presionarlo configura el timer y espera a que setee un tiempo para iniciar

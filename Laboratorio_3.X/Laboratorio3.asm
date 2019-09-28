@@ -14,7 +14,7 @@
 ;Organizacion de la memoria de datos 
 cblock 0x20	;Comienzo a escribir la memoria de datos en la direcciÃ³n 0x20
 
- 
+    unos
 endc
 
 ;Organizacion de la memoria de programacion
@@ -26,6 +26,10 @@ org 0x0004
 
 main
 ;Configuraçao:
+    
+    MOVLW B'11111111'
+    MOVWF unos
+    
     banksel PIR1
     bcf PIR1,6 ;Deja el flag del conversor en 0
     
@@ -33,10 +37,10 @@ main
     bsf PIE1,6
     
     
-    banksel TRISA ;Pone ra0 como entrada
+    banksel TRISA ;Pone RA0 como entrada
     bsf TRISA,0
     
-    banksel ANSEL ;Setea ra0 a analogo
+    banksel ANSEL ;Setea RA0 a analogo
     bsf ANSEL,0
     
     banksel ADCON1
@@ -51,6 +55,16 @@ main
     
     banksel PORTD
     clrf PORTD
+    
+    bsf ADCON0, GO ; Empieza la conversion
+    BTFSC ADCON0, GO ; Termino la conversion?
+    GOTO $-1 ; No, chequear otra vez.
+    BANKSEL ADRESH ;
+    MOVF ADRESH, W   
+    BANKSEL PORTD
+    MOVWF PORTD
+    
+ convertir ; Funcion para "llenar de ceros" el numero devuelto por el conversor A/D. Ej: 00001010 -> 00001111
     
     
     
