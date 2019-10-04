@@ -13,8 +13,9 @@
  
 ;Organizacion de la memoria de datos 
 cblock 0x20	;Comienzo a escribir la memoria de datos en la dirección 0x20
-
+    contador
     unos
+    boolean
 endc
 
 ;Organizacion de la memoria de programacion
@@ -64,14 +65,23 @@ main
     BANKSEL PORTD
     MOVWF PORTD
     
- convertir ; Funcion para "llenar de ceros" el numero devuelto por el conversor A/D. Ej: 00001010 -> 00001111
+convertir ; Funcion para "llenar de ceros" el numero devuelto por el conversor A/D. Ej: 00001010 -> 00001111
+    
+    MOVWF unos
+    MOVLW d'128'
+    MOVWF contador
+    decfsz unos,f  ; Decrementar el A/D
+    decfsz contador,f ; Decrementar 128 veces
+    MOVF unos,w
+    ADDLW w
+    MOVWF boolean
+    goto $-2
+    goto $-5
     
     
     
 __main
     
-interrupt
-    retfie
 END
 
 
