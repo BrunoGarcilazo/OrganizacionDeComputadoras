@@ -13,23 +13,21 @@
  
 ;Organizacion de la memoria de datos 
 cblock 0x20	;Comienzo a escribir la memoria de datos en la direcciÃ³n 0x20
-    contador
-    unos
-    boolean
+    leds
+    numero
 endc
 
 ;Organizacion de la memoria de programacion
 org 0x0000
     goto main
 
-org 0x0004
-    goto interrupt
+
 
 main
 ;Configuraçao:
     
     MOVLW B'11111111'
-    MOVWF unos
+    MOVWF leds
     
     banksel PIR1
     bcf PIR1,6 ;Deja el flag del conversor en 0
@@ -37,9 +35,20 @@ main
     banksel PIE1 ;Enable de las interrupciones ADC
     bsf PIE1,6
     
+    banksel PORTA
+    clrf PORTA
     
     banksel TRISA ;Pone RA0 como entrada
-    bsf TRISA,0
+    MOVLW b'00000001'
+    MOVWF TRISA
+    
+    banksel TRISE
+    MOVLW b'11111001'
+    MOVWF TRISE
+    
+    banksel PORTE
+    MOVLW b'00000110'
+    MOVWF PORTE
     
     banksel ANSEL ;Setea RA0 a analogo
     bsf ANSEL,0
@@ -57,27 +66,50 @@ main
     banksel PORTD
     clrf PORTD
     
+
+reiniciar
+    BANKSEL ADCON0
     bsf ADCON0, GO ; Empieza la conversion
     BTFSC ADCON0, GO ; Termino la conversion?
-    GOTO $-1 ; No, chequear otra vez.
+    goto $-1 ; No, chequear otra vez.
     BANKSEL ADRESH ;
-    MOVF ADRESH, W   
+    MOVF ADRESH, W  
+    banksel leds
+    movwf leds
+    movwf numero
+    MOVLW b'00111111'
+    ANDWF numero,w
+    movwf numero
+    
+    SWAPF leds,f
+    RRF leds,f
+    MOVLW b'00000111'
+    ANDWF leds,w
+
+    call convertir
     BANKSEL PORTD
-    MOVWF PORTD
+    movwf PORTD
+    
+    RLF numero,f
+    RLF numero,f
+    movf numero,w
+    BANKSEL PORTA
+    movwf PORTA
+
+    
+    goto reiniciar
     
 convertir ; Funcion para "llenar de ceros" el numero devuelto por el conversor A/D. Ej: 00001010 -> 00001111
-    
-    MOVWF unos
-    MOVLW d'128'
-    MOVWF contador
-    decfsz unos,f  ; Decrementar el A/D
-    decfsz contador,f ; Decrementar 128 veces
-    MOVF unos,w
-    ADDLW w
-    MOVWF boolean
-    goto $-2
-    goto $-5
-    
+    BANKSEL PCL
+    ADDWF PCL
+    retlw b'00000001'
+    retlw b'00000011'
+    retlw b'00000111'
+    retlw b'00001111'
+    retlw b'00011111'
+    retlw b'00111111'
+    retlw b'01111111'
+    retlw b'11111111'
     
     
 __main
