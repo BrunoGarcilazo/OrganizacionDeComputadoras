@@ -201,7 +201,7 @@ interrupt
     clrf TMR1L          
     
     banksel PIR1
-    bcf PIR1,0	        ;Ponemos a cero el registro TMR1IF: Timer1 Overflow Interrupt Flag bit
+    clrf PIR1	        ;Ponemos a cero el registro TMR1IF: Timer1 Overflow Interrupt Flag bit
     
     bsf INTCON,6        ;Configura el peie; PEIE: Peripheral Interrupt Enable bit 
     banksel segundosRestantes
