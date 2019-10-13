@@ -33,14 +33,12 @@ org 0x0004
 
 main
 ;Configuraçao:  
-    
+    bsf INTCON,6        ;Configura el peie; PEIE: Peripheral Interrupt Enable bit 
     movlw D'5'
     movwf segundosRestantes 
     MOVLW B'11111111'
     MOVWF leds
     
-    banksel PIR1
-    bcf PIR1,6 ;Deja el flag del conversor en 0
     
     banksel PIE1 ;Enable de las interrupciones ADC
     bsf PIE1,6
@@ -123,6 +121,7 @@ reiniciar
 convertir ; Funcion para "llenar de ceros" el numero devuelto por el conversor A/D. Ej: 00001010 -> 00001111
     BANKSEL PCL
     ADDWF PCL
+    retlw b'00000000'
     retlw b'00000001'
     retlw b'00000011'
     retlw b'00000111'
@@ -130,49 +129,39 @@ convertir ; Funcion para "llenar de ceros" el numero devuelto por el conversor A
     retlw b'00011111'
     retlw b'00111111'
     retlw b'01111111'
-    retlw b'11111111'
     
-intercalar
+mostrarIzq
     banksel PORTE
     btfsc PORTE,1
-    btfss PORTE,1
+    return
     bsf PORTE,1
-    bcf PORTE,1
+    bcf PORTE,2
     banksel PORTA
     movf numero2,w
     movwf PORTA
+    return
+    
+mostrarDer
     banksel PORTE
     btfsc PORTE,2
-    btfss PORTE,2
+    return
     bsf PORTE,2
-    bcf PORTE,2
+    bcf PORTE,1
     banksel PORTA
     movf numero,w
     movwf PORTA
     return
     
+    
 ;Funcion que, setea los valores en el timer para crear intervalos de 100 ms.
 configurar
-    banksel T1CON ;Configuracion del registro de timer 1 (Ver dataSheet pag: 81).
-    movlw b'00010101'
-    movwf T1CON
+    movlw b'11100000'
+    banksel INTCON
+    movwf INTCON
     
-    ;Antes de habilitar las interrupciones hay que hacer clear del reloj
-    banksel TMR1H
-    movlw b'11000000'
-    movwf TMR1H
-    
-    banksel TMR1L       ;Ponemos a cero el registro TMR1H: Holding Register for the Most Significant Byte of the 16-bit TMR1 Register
-    clrf TMR1L
-    
-    banksel PIR1        
-    bcf PIR1,0	        ;TMR1IF: Timer1 Overflow Interrupt Flag bit ;1 =   The TMR1 register overflowed (must be cleared in software); 0 =   The TMR1 register did not overflow
-    
-    banksel PIE1        ;Configura el pie.
-    bsf PIE1,0          ;TMR1IE: Timer1 Overflow Interrupt Enable bit
-    
-    bsf INTCON,6        ;Configura el peie; PEIE: Peripheral Interrupt Enable bit 
-    bsf INTCON,7        ;Configura el Gie; GIE: Global Interrupt Enable bit
+    banksel OPTION_REG
+    movlw b'00000110'
+    movwf OPTION_REG
     
     return
     
@@ -181,21 +170,14 @@ interrupt
     banksel auxW        ;Guardamos lo que traia W en aux W
     movwf auxW
     
-    ;Clear al Timer
-    banksel TMR1H       ;Ponemos a cero el registro TMR1H: Holding Register for the Most Significant Byte of the 16-bit TMR1 Register
-    movlw b'11000000'
-    movwf TMR1H
-    
-    banksel TMR1L       ;Ponemos a cero el registro TMR1L: Holding Register for the Least Significant Byte of the 16-bit TMR1 Register
-    clrf TMR1L          
-    
     banksel PIR1
-    clrf PIR1        ;Ponemos a cero el registro TMR1IF: Timer1 Overflow Interrupt Flag bit
-
+    clrf PIR1
     
-    bsf INTCON,6        ;Configura el peie; PEIE: Peripheral Interrupt Enable bit 
-
-    call intercalar
+    bcf INTCON, 2
+    
+    
+    call mostrarDer
+    call mostrarIzq
     banksel auxW        ;Devolvemos el valor que tenia W
     movf auxW,w
     retfie
