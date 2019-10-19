@@ -10,7 +10,12 @@
 ; __config 0xFEFF
  __CONFIG _CONFIG2, _BOR4V_BOR21V & _WRT_OFF
 
-    org 0x0000
+cblock 0x20	;Comienzo a escribir la memoria de datos en la dirección 0x20
+    auxiliarA
+ 
+endc
+    
+org 0x0000
     goto main
  
 eusart_init
@@ -22,7 +27,7 @@ eusart_init
     bsf RCSTA, SPEN  ; enable EUSART, TX/CK/IO as output
     return
     
-; baud rate setting is is in w
+; baud rate setting is in w
 ; check TABLE 12-5: BAUD RATES FOR ASYNCHRONOUS MODES
 eusart_baud_rate
     banksel TXSTA
@@ -36,11 +41,47 @@ eusart_baud_rate
     return
  
 main
+    
+    banksel ADCON1
+    bcf ADCON1,7
+    
+    banksel ADCON0
+    movlw b'10000001'
+    movwf ADCON0
+    
+    banksel auxiliarA ;Configuro auxiliarA (verificarInput)
+    movlw b'10000000'
+    movwf auxiliarA
+    
+    banksel TRISD ;Habilitamos las luces.
+    clrf TRISD
+    
     movlw d'129'
     call eusart_baud_rate
     call eusart_init
 
-_main_loop
-    goto _main_loop
-    
-    end
+_main_loop	    ; 'A' en binario: b'10000000'
+	
+	banksel RCREG
+	movfw RCREG
+	banksel TXREG
+	;movfw b'11001010'
+	;movwf TXREG
+	goto _main_loop
+end
+
+verificoInput
+	banksel RCREG
+	movfw RCREG	
+	banksel auxiliarA	
+	ANDWF auxiliarA,0
+	decfsz w
+	goto verificoInput
+	call mostrarConversion
+	
+end	
+	
+mostrarConversion ; Tomar el dato del Conversor A/D y colocarlo en TXREG (lo envia a la PC)
+	
+	
+	
