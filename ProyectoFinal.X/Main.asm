@@ -16,10 +16,16 @@ cblock 0x20	;Comienzo a escribir la memoria de datos en la dirección 0x20
     tercerLetra
     bar
     foo
+    contador10segundos
+    STATUS_TEMP
+    W_TEMP
+    
 endc
     
 org 0x0000
     goto main
+org 0x0004
+    goto interrupt
  
 eusart_init
     banksel TXSTA
@@ -44,9 +50,11 @@ eusart_baud_rate
     return
  
 main
+    movlw d'50'
+    banksel contador10segundos
+    movwf contador10segundos
     
-    banksel ADCON1
-    bsf ADCON1,7
+    
     
     banksel ADCON0
     movlw b'10000001'
@@ -57,12 +65,12 @@ main
     banksel PORTD
     clrf PORTD
     
-    
-    
     movlw d'129'
     call eusart_baud_rate
     call eusart_init
     
+loop
+    goto loop
 esperarInput
     call supero3V
     banksel PIR1
@@ -206,6 +214,80 @@ prenderLed
     movwf PORTD
     return
 
+    
+    
+    
+    
+configurarTMR1
+    banksel T1CON
+    movlw b'00110001'
+    banksel PIE1
+    bsf PIE1,TMR1IE
+    banksel INTCON
+    bsf INTCON,GIE
+    bsf INTCON,PEIE
+    banksel TMR1H
+    movlw 0x0B
+    movwf TMR1H
+    banksel TMR1L
+    movlw 0xDC
+    movwf TMR1L
+    
+    
+    
+interrupt
+    
+    MOVWF  W_TEMP           ;Copy W to TEMP register
+    SWAPF  STATUS,W         ;Swap status to be saved into W ;Swaps are used because they do not affect the status 
+		            ;Save status to bank zero STATUS_TEMP register
+    MOVWF  STATUS_TEMP
+    
+    banksel TMR1H
+    movlw 0x0B
+    movwf TMR1H
+    banksel TMR1L
+    movlw 0xDC
+    movwf TMR1L
+    banksel PIR1
+    bcf PIR1,TMR1IF
+    decfsz contador10segundos
+    call finalizar
+    goto guardar          
+finalizar
+    SWAPF  STATUS_TEMP,W    ;Swap STATUS_TEMP register into W ;(sets bank to original state)
+    MOVWF  STATUS           ;Move W into STATUS register
+    SWAPF  W_TEMP,F         ;Swap W_TEMP
+    SWAPF  W_TEMP,W         ;Swap W_TEMP into W
+    retfie
+    
+guardar
+    bcf INTCON,GIE
+    banksel EEADR
+    movlw 0xFF
+    movwf EEADR
+    banksel EEDAT
+    movlw 0xDA
+    movwf EEDAT
+    banksel EECON1
+    bcf EECON1,EEPGD
+    bsf EECON1,WREN
+    banksel EECON2
+    movlw 0x55
+    movwf EECON2
+    movlw 0xAA
+    movwf EECON2
+    banksel EECON1
+    bsf EECON1,WR
+    banksel PIR2
+    btfss PIR2,EEIF
+    goto $-1
+    bcf PIR2,EEIF
+    bsf INTCON,GIE
+    return
+    
+    
+
+    
 end
 	
 	
