@@ -11,14 +11,19 @@
  __CONFIG _CONFIG2, _BOR4V_BOR21V & _WRT_OFF
 
 cblock 0x20	;Comienzo a escribir la memoria de datos en la dirección 0x20
+    temp
     primerLetra
     segundaLetra
     tercerLetra
-    bar
-    foo
     contador10segundos
     STATUS_TEMP
     W_TEMP
+    cola
+    cabeza
+    datoGuardar
+    contDir
+    direccionDirMemoria
+    direccion
     
 endc
     
@@ -50,11 +55,19 @@ eusart_baud_rate
     return
  
 main
-    movlw d'50'
+    movlw d'10'
     banksel contador10segundos
     movwf contador10segundos
     
     
+    movlw 0xFF
+    banksel direccionDirMemoria
+    movwf direccionDirMemoria
+    
+    bsf INTCON,GIE
+    bsf INTCON,PEIE
+    banksel PIE2
+    bsf PIE2,EEIE
     
     banksel ADCON0
     movlw b'10000001'
@@ -68,15 +81,19 @@ main
     movlw d'129'
     call eusart_baud_rate
     call eusart_init
+    call configurarTMR1
+    call obtenerCont1EraVez
+    
     
 loop
-    goto loop
-esperarInput
-    call supero3V
+    call obtenerAD
+    banksel datoGuardar
+    movwf datoGuardar
     banksel PIR1
     btfsc PIR1, RCIF 
     goto verificoInput
-    goto esperarInput
+    goto loop
+
     
 verificoInput
     banksel RCREG
@@ -84,16 +101,20 @@ verificoInput
     sublw 0x41
     btfsc STATUS,Z
     call mostrarConversion
-    goto esperarInput
-	
-	
-mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG (lo envia a la PC)
+    goto loop
+;    
+obtenerAD
     banksel ADCON0
     bsf ADCON0, GO ; Empieza la conversion
     BTFSC ADCON0, GO ; Termino la conversion?
     goto $-1 ; No, chequear otra vez.
-    banksel ADRESL 
-    MOVF ADRESL, W
+    banksel ADRESH 
+    movf ADRESH, W
+    return
+    
+mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG (lo envia a la PC)
+    movf direccion,w
+    call leer
     
     banksel primerLetra
     movwf primerLetra
@@ -108,10 +129,10 @@ mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG 
     swapf segundaLetra,f
     andwf segundaLetra,f
     
-    banksel ADRESH
-    movf ADRESH,w
-    banksel tercerLetra
-    movwf tercerLetra
+;    banksel ADRESH
+;    movf ADRESH,w
+;    banksel tercerLetra
+;    movwf tercerLetra
     
     
     banksel primerLetra
@@ -124,10 +145,10 @@ mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG 
     call conversionNumero
     movwf segundaLetra
     
-    banksel tercerLetra
-    movf tercerLetra,w
-    call conversionNumero
-    movwf tercerLetra
+;    banksel tercerLetra
+;    movf tercerLetra,w
+;    call conversionNumero
+;    movwf tercerLetra
     
     call mostrarLetras
     
@@ -135,9 +156,9 @@ mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG 
     
     
 mostrarLetras    
-    banksel tercerLetra
-    movf tercerLetra,w
-    call enviar
+;    banksel tercerLetra
+;    movf tercerLetra,w
+;    call enviar
     banksel segundaLetra
     movf segundaLetra,w
     call enviar
@@ -174,57 +195,15 @@ conversionNumero
     retlw 0x45
     retlw 0x46
     
-supero3V  ;614 aproximado 3V binario = 10 0110 0110
-    banksel PORTD
-    clrf PORTD
-    
-    banksel ADCON0
-    bsf ADCON0, GO ; Empieza la conversion
-    BTFSC ADCON0, GO ; Termino la conversion?
-    goto $-1 ; No, chequear otra vez.
-    banksel ADRESH 
-    
-    movlw b'00000010'
-    subwf ADRESH,w
-    banksel STATUS
-    
-    btfss STATUS,C
-    goto $+2
-    call prenderLed
-    
-    btfss STATUS,Z
-    goto fin
-    
-    
-    banksel ADRESL 
-    
-    movlw b'01100110'
-    subwf ADRESL,w
-    
-    banksel STATUS
-    btfsc STATUS,C
-    call prenderLed
-    
-    fin
-    return
-    
-prenderLed
-    banksel PORTD
-    movlw b'00000001'
-    movwf PORTD
-    return
 
     
-    
-    
-    
 configurarTMR1
+    
     banksel T1CON
     movlw b'00110001'
+    movwf T1CON
     banksel PIE1
     bsf PIE1,TMR1IE
-    banksel INTCON
-    bsf INTCON,GIE
     bsf INTCON,PEIE
     banksel TMR1H
     movlw 0x0B
@@ -233,15 +212,32 @@ configurarTMR1
     movlw 0xDC
     movwf TMR1L
     
+    return
     
     
+
 interrupt
-    
     MOVWF  W_TEMP           ;Copy W to TEMP register
     SWAPF  STATUS,W         ;Swap status to be saved into W ;Swaps are used because they do not affect the status 
 		            ;Save status to bank zero STATUS_TEMP register
     MOVWF  STATUS_TEMP
     
+    banksel PIR2
+    btfsc PIR2,EEIF
+    goto bajarEscritura
+    
+    call actualizarTimer
+    
+    
+    
+terminar
+    SWAPF  STATUS_TEMP,W    ;Swap STATUS_TEMP register into W ;(sets bank to original state)
+    MOVWF  STATUS           ;Move W into STATUS register
+    SWAPF  W_TEMP,F         ;Swap W_TEMP
+    SWAPF  W_TEMP,W         ;Swap W_TEMP into W
+    retfie
+    
+actualizarTimer
     banksel TMR1H
     movlw 0x0B
     movwf TMR1H
@@ -251,46 +247,140 @@ interrupt
     banksel PIR1
     bcf PIR1,TMR1IF
     decfsz contador10segundos
-    call finalizar
-    goto guardar          
-finalizar
-    SWAPF  STATUS_TEMP,W    ;Swap STATUS_TEMP register into W ;(sets bank to original state)
-    MOVWF  STATUS           ;Move W into STATUS register
-    SWAPF  W_TEMP,F         ;Swap W_TEMP
-    SWAPF  W_TEMP,W         ;Swap W_TEMP into W
-    retfie
+    goto terminar
+    goto pasaron10s
+
     
-guardar
-    bcf INTCON,GIE
+pasaron10s
+    movlw d'10'
+    movwf contador10segundos
+    
+    call obtenerCont
+    movwf contDir
+    call obtenerDireccion
+    banksel direccion
+;    movwf direccion
+;    call leer
+    movwf contDir
+    banksel PORTD
+    movwf PORTD
+;    call escribir
+    movlw d'1'
+    banksel contDir
+    addwf contDir
+    movf contDir,w
+    call guardarCont
+    goto terminar
+    
+bajarEscritura
+    bcf PIR2,EEIF
+    goto terminar
+    
+    
+escribir
     banksel EEADR
-    movlw 0xFF
     movwf EEADR
+    banksel datoGuardar
+    movf datoGuardar,w
     banksel EEDAT
-    movlw 0xDA
     movwf EEDAT
     banksel EECON1
     bcf EECON1,EEPGD
     bsf EECON1,WREN
-    banksel EECON2
+    
+    
+    bcf INTCON,GIE
+    btfsc INTCON,GIE
+    goto $-2
+    
     movlw 0x55
     movwf EECON2
     movlw 0xAA
     movwf EECON2
-    banksel EECON1
     bsf EECON1,WR
-    banksel PIR2
-    btfss PIR2,EEIF
-    goto $-1
-    bcf PIR2,EEIF
     bsf INTCON,GIE
+    
+    sleep
+    
+    banksel EECON1
+    bcf EECON1,WREN
     return
     
     
-
+leer
+    banksel EEADR
+    movwf EEADR
+    banksel EECON1
+    bcf EECON1,EEPGD
+    bsf EECON1,RD
+    banksel EEDAT
+    movf EEDAT,w
+    return
     
+    
+obtenerDireccion
+    call actualizarDir
+    banksel PCL
+    addwf PCL
+    retlw 0x10
+    retlw 0x11
+    retlw 0x12
+    retlw 0x13
+    retlw 0x14
+    retlw 0x15
+    retlw 0x16
+    retlw 0x17
+    retlw 0x18
+    retlw 0x19
+    
+actualizarDir
+    banksel contDir
+    movf contDir,w
+    sublw d'10'
+    btfsc STATUS,Z
+    call resetearCont
+    movf contDir,w
+    return
+    
+obtenerCont1EraVez
+    banksel direccionDirMemoria
+    movf direccionDirMemoria,w
+    call leer
+    movwf temp
+    sublw d'10'
+    btfss STATUS,C
+    goto esMayorQue10
+    movf temp,w
+    return
+    
+obtenerCont
+    banksel direccionDirMemoria
+    movf direccionDirMemoria,w
+    call leer
+    
+    
+    return
+
+guardarCont
+    banksel contDir
+    movf contDir,w
+    banksel datoGuardar
+    movwf datoGuardar
+    banksel direccionDirMemoria
+    movf direccionDirMemoria,w
+    call escribir
+    return
+    
+esMayorQue10
+    call resetearCont
+    call guardarCont
+    movf contDir,w
+    return
+
+resetearCont
+    banksel contDir
+    movlw d'0'
+    movwf contDir
+    return
+
 end
-	
-	
-	
-
-
