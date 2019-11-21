@@ -48,20 +48,20 @@ eusart_baud_rate
     bsf TXSTA, BRGH      ; BRGH=1
     banksel BAUDCTL
     bcf BAUDCTL, BRG16   ; BRG16=0
-    banksel SPBRGH
+    banksel SPBRGH	 ; limpiamos SPBRGH
     clrf SPBRGH
-    banksel SPBRG        
+    banksel SPBRG        ; movemos SPBRG a w
     movwf SPBRG
     return
  
 main
-    movlw d'10'
-    banksel contador10segundos
+    movlw d'10'	    ; Movemos el decimal 10 a w
+    banksel contador10segundos	; Movemos d'10' a contador10segundos
     movwf contador10segundos
     
     
-    movlw 0xFF
-    banksel direccionDirMemoria
+    movlw 0xFF		
+    banksel direccionDirMemoria ; Guardamos 0xFF en direccionDirMemoria
     movwf direccionDirMemoria
     
     bsf INTCON,GIE
@@ -103,7 +103,7 @@ verificoInput
     call mostrarConversion
     goto loop
 ;    
-obtenerAD
+obtenerAD  ; Obtiene el dato devuelto por el conversor A/D
     banksel ADCON0
     bsf ADCON0, GO ; Empieza la conversion
     BTFSC ADCON0, GO ; Termino la conversion?
@@ -113,7 +113,7 @@ obtenerAD
     return
     
 mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG (lo envia a la PC)
-    movf direccion,w
+    movf direccion,w ; 
     call leer
     
     banksel primerLetra
@@ -167,7 +167,7 @@ mostrarLetras
     call enviar
     return
     
-enviar
+enviar ; Envia lo guardado en w a la PC (lo coloca en TXREG)
     banksel PIR1
     btfss PIR1, TXIF
     goto $-1
@@ -175,7 +175,7 @@ enviar
     movwf TXREG
     return
     
-conversionNumero
+conversionNumero ; Convierte un numero en hexa a su correspondiente en ASCII (0 a F)
     BANKSEL PCL
     ADDWF PCL
     retlw 0x30
@@ -197,7 +197,7 @@ conversionNumero
     
 
     
-configurarTMR1
+configurarTMR1 ; Configura el Timer1 para interrumpir cada 0.1s (0x0BCD)
     
     banksel T1CON
     movlw b'00110001'
