@@ -256,15 +256,18 @@ pasaron10s
     movwf contador10segundos
     
     call obtenerCont
-    movwf contDir
-    call obtenerDireccion
-    banksel direccion
-;    movwf direccion
-;    call leer
-    movwf contDir
+    call actualizarDir
+    banksel contDir
+    movf contDir,w
     banksel PORTD
     movwf PORTD
-;    call escribir
+    call obtenerDireccion
+;    banksel direccion
+;    movwf direccion
+;    call leer
+    
+;    
+;;    call escribir
     movlw d'1'
     banksel contDir
     addwf contDir
@@ -318,10 +321,9 @@ leer
     return
     
     
-obtenerDireccion
-    call actualizarDir
+obtenerDireccion    
     banksel PCL
-    addwf PCL
+;    ADDWF PCL
     retlw 0x10
     retlw 0x11
     retlw 0x12
@@ -339,7 +341,6 @@ actualizarDir
     sublw d'10'
     btfsc STATUS,Z
     call resetearCont
-    movf contDir,w
     return
     
 obtenerCont1EraVez
@@ -357,8 +358,7 @@ obtenerCont
     banksel direccionDirMemoria
     movf direccionDirMemoria,w
     call leer
-    
-    
+    movwf contDir
     return
 
 guardarCont
