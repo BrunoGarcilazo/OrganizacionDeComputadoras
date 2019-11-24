@@ -119,7 +119,7 @@ mostrarH
     btfsc STATUS,Z
     movwf temp
     
-    seguirMostrando
+seguirMostrando
     decfsz contadorH
     goto $+2
     goto loop
