@@ -75,7 +75,7 @@ main
     
     banksel TRISD ;Habilitamos las luces.
     clrf TRISD
-    banksel PORTD
+    banksel PORTD ; Vacia el registro de LEDs
     clrf PORTD
     
     movlw d'129'
@@ -86,27 +86,27 @@ main
     
     
 loop
-    call obtenerAD
+    call obtenerAD	; Obtiene el dato AD
     banksel datoGuardar
-    movwf datoGuardar
+    movwf datoGuardar	; Mueve el resultado de obtenerAD a datoGuardar
     banksel PIR1
-    btfsc PIR1, RCIF 
-    goto verificoInput
+    btfsc PIR1, RCIF	; Verifica el Receive Interrupt Flag bit
+    goto verificoInput	; 
     goto loop
 
     
-verificoInput
+verificoInput	; Verifica el dato recibid
     banksel RCREG
     movf RCREG,w	
-    sublw 0x41 ; ES A
-    btfsc STATUS,Z
+    sublw 0x41 ; A
+    btfsc STATUS,Z ; Si la resta dio 0 (bit en 1), se llamara a mostrarConversion
     call mostrarConversion
-    
+    ;Si la resta no dio 0 es porque RCREG no es 'A'
     movf RCREG,w
-    sublw 0x48 ; ES H
-    btfsc STATUS,Z
-    call mostrarH
-    goto loop
+    sublw 0x48 ; H
+    btfsc STATUS,Z ; Verifica si RCREG era H
+    call mostrarH  ; Era H, llamo a mostrarH
+    goto loop	   ; Si no era A ni H, vuelvo a loop
     
 
 mostrarH
@@ -155,15 +155,15 @@ mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG 
     movwf segundaLetra
     
     
-    movlw b'00001111'
+    movlw b'00001111'	  ; Realiza un AND entre W y primeraLetra, guarda el resultado en primeraLetra
     banksel primerLetra
     andwf primerLetra,f
-    banksel segundaLetra
+    banksel segundaLetra  ; Cambia los nibbles de segundaLetra y realiza un AND con W, guarda el resultado en segundaLetra
     swapf segundaLetra,f
     andwf segundaLetra,f
     
     
-    banksel primerLetra
+    banksel primerLetra	  ; Mueve primeraLetra a W y llama a conversionNumero, guarda el resultado en W.
     movf primerLetra,w
     call conversionNumero
     movwf primerLetra
@@ -172,22 +172,23 @@ mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG 
     movf segundaLetra,w
     call conversionNumero
     movwf segundaLetra
-
-    
-    call mostrarLetras
+   
+    call mostrarLetras ; Una vez se tiene el dato deseado, se envian a la PC
     
     return
     
     
-mostrarLetras    
+mostrarLetras    ; Envia las letras correspondientes, luego envia '\n'
     banksel segundaLetra
     movf segundaLetra,w
-    call enviar
+    call enviar ; Envia segundaLetra
+    
     banksel primerLetra
     movf primerLetra,w
-    call enviar
+    call enviar ; Envia primeraLetra
+    
     movlw 0x0A
-    call enviar
+    call enviar ; Envia \n
     return
     
 enviar ; Envia lo guardado en w a la PC (lo coloca en TXREG)
@@ -356,16 +357,17 @@ leer
     
 
     
-actualizarDir
+actualizarDir ; Funcion que le resta d'10' a contDir
     banksel contDir
     movf contDir,w
     sublw d'10'
-    btfsc STATUS,Z
-    call resetearCont
-    return
+    btfsc STATUS,Z ; Verifica si la resta dio 0
+    call resetearCont ; Si la resta dio 0, resetea el contador (lo vuelve 0)
+    return	      ; Si la resta no dio 0, retorna a la tarea anterior sin cambios
+    
     
 obtenerCont1EraVez ; Ejecuta al inicio del programa
-    banksel direccionDirMemoria
+    banksel direccionDirMemoria	;
     movf direccionDirMemoria,w
     call leer
     movwf temp
