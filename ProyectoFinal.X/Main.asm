@@ -24,6 +24,7 @@ cblock 0x20	;Comienzo a escribir la memoria de datos en la dirección 0x20
     contDir
     direccionDirMemoria
     direccion
+    contadorH
     
 endc
     
@@ -53,12 +54,11 @@ eusart_baud_rate
     banksel SPBRG        ; movemos SPBRG a w
     movwf SPBRG
     return
- 
+
 main
     movlw d'10'	    ; Movemos el decimal 10 a w
     banksel contador10segundos	; Movemos d'10' a contador10segundos
     movwf contador10segundos
-    
     
     movlw 0xFF		
     banksel direccionDirMemoria ; Guardamos 0xFF en direccionDirMemoria
@@ -98,11 +98,44 @@ loop
 verificoInput
     banksel RCREG
     movf RCREG,w	
-    sublw 0x41
+    sublw 0x41 ; ES A
     btfsc STATUS,Z
     call mostrarConversion
+    
+    movf RCREG,w
+    sublw 0x48 ; ES H
+    btfsc STATUS,Z
+    call mostrarH
     goto loop
-;    
+    
+
+mostrarH
+    movlw d'11'
+    movwf contadorH
+    banksel contDir
+    movf contDir,w
+    movwf temp
+    sublw d'10'
+    btfsc STATUS,Z
+    movwf temp
+    
+    seguirMostrando
+    decfsz contadorH
+    goto $+2
+    goto loop
+    movf temp,w
+    call obtenerDireccion
+    movwf direccion
+    call mostrarConversion
+    movlw d'1'
+    addwf temp
+    movf temp,w
+    sublw d'10'
+    btfsc STATUS,Z
+    movwf temp
+    goto seguirMostrando
+    
+   
 obtenerAD  ; Obtiene el dato devuelto por el conversor A/D
     banksel ADCON0
     bsf ADCON0, GO ; Empieza la conversion
@@ -129,11 +162,6 @@ mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG 
     swapf segundaLetra,f
     andwf segundaLetra,f
     
-;    banksel ADRESH
-;    movf ADRESH,w
-;    banksel tercerLetra
-;    movwf tercerLetra
-    
     
     banksel primerLetra
     movf primerLetra,w
@@ -144,11 +172,7 @@ mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG 
     movf segundaLetra,w
     call conversionNumero
     movwf segundaLetra
-    
-;    banksel tercerLetra
-;    movf tercerLetra,w
-;    call conversionNumero
-;    movwf tercerLetra
+
     
     call mostrarLetras
     
@@ -156,14 +180,13 @@ mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG 
     
     
 mostrarLetras    
-;    banksel tercerLetra
-;    movf tercerLetra,w
-;    call enviar
     banksel segundaLetra
     movf segundaLetra,w
     call enviar
     banksel primerLetra
     movf primerLetra,w
+    call enviar
+    movlw 0x0A
     call enviar
     return
     
@@ -174,6 +197,20 @@ enviar ; Envia lo guardado en w a la PC (lo coloca en TXREG)
     banksel TXREG
     movwf TXREG
     return
+    
+obtenerDireccion    ; Obtiene la direccion correspondiente para el buffer circular
+    banksel PCL
+    ADDWF PCL
+    retlw 0x10
+    retlw 0x11
+    retlw 0x12
+    retlw 0x13
+    retlw 0x14
+    retlw 0x15
+    retlw 0x16
+    retlw 0x17
+    retlw 0x18
+    retlw 0x19   
     
 conversionNumero ; Convierte un numero en hexa a su correspondiente en ASCII (0 a F)
     BANKSEL PCL
@@ -198,7 +235,6 @@ conversionNumero ; Convierte un numero en hexa a su correspondiente en ASCII (0 
 
     
 configurarTMR1 ; Configura el Timer1 para interrumpir cada 0.1s (0x0BCD en los registros TMR1H y TMR1L)
-    
     banksel T1CON
     movlw b'00110001' 
     movwf T1CON
@@ -258,18 +294,13 @@ pasaron10s
     movlw d'10'		     ;Se coloca d'10' nuevamente.
     movwf contador10segundos    
     call obtenerCont
-    call actualizarDir
-    banksel contDir	     ;Se muestra contDir en los LEDS
-    movf contDir,w
+    call obtenerDireccion
+    banksel direccion
+    movwf direccion
+    call leer
     banksel PORTD
     movwf PORTD
-    call obtenerDireccion
-;    banksel direccion
-;    movwf direccion
-;    call leer
-    
-;    
-;;    call escribir
+;    call mostrarConversion
     movlw d'1'		    ;Le suma uno a contDir y lo guarda en w
     banksel contDir
     addwf contDir
@@ -323,19 +354,7 @@ leer
     return
     
     
-obtenerDireccion    ; Obtiene la direccion correspondiente para el buffer circular
-    banksel PCL
-;   ADDWF PCL
-    retlw 0x10
-    retlw 0x11
-    retlw 0x12
-    retlw 0x13
-    retlw 0x14
-    retlw 0x15
-    retlw 0x16
-    retlw 0x17
-    retlw 0x18
-    retlw 0x19
+
     
 actualizarDir
     banksel contDir
@@ -361,6 +380,7 @@ obtenerCont ; Lee de la EEPROM la direccion dada por 'direccionDirMemoria'
     movf direccionDirMemoria,w
     call leer
     movwf contDir ; Guarda e en contDir al finalizar la lectura
+    call actualizarDir
     return
 
 guardarCont
