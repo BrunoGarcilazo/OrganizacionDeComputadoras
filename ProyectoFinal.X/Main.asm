@@ -20,7 +20,7 @@ cblock 0x20	;Comienzo a escribir la memoria de datos en la dirección 0x20
     W_TEMP
     cola
     cabeza
-    datoGuardar
+    datoGuardar ; Variable que sera utilizada para almacenar el dato a guardarse en EEPROM
     contDir
     direccionDirMemoria
     direccion
@@ -197,10 +197,10 @@ conversionNumero ; Convierte un numero en hexa a su correspondiente en ASCII (0 
     
 
     
-configurarTMR1 ; Configura el Timer1 para interrumpir cada 0.1s (0x0BCD)
+configurarTMR1 ; Configura el Timer1 para interrumpir cada 0.1s (0x0BCD en los registros TMR1H y TMR1L)
     
     banksel T1CON
-    movlw b'00110001'
+    movlw b'00110001' 
     movwf T1CON
     banksel PIE1
     bsf PIE1,TMR1IE
@@ -223,7 +223,7 @@ interrupt
     MOVWF  STATUS_TEMP
     
     banksel PIR2
-    btfsc PIR2,EEIF
+    btfsc PIR2,EEIF	    ; Verifica si termino la escritura.
     goto bajarEscritura
     
     call actualizarTimer
@@ -237,27 +237,29 @@ terminar
     SWAPF  W_TEMP,W         ;Swap W_TEMP into W
     retfie
     
-actualizarTimer
+actualizarTimer ; Vuelve a "setear" los valores 0x0BDC en el Timer1 
     banksel TMR1H
     movlw 0x0B
-    movwf TMR1H
+    movwf TMR1H	
+    
     banksel TMR1L
     movlw 0xDC
     movwf TMR1L
+    
     banksel PIR1
     bcf PIR1,TMR1IF
-    decfsz contador10segundos
+    
+    decfsz contador10segundos ; Decrementa: si f != 0: termina la interrupcion, sino llama a pasaron10s y termina la interrupcion.
     goto terminar
     goto pasaron10s
 
     
 pasaron10s
-    movlw d'10'
-    movwf contador10segundos
-    
+    movlw d'10'		     ;Se coloca d'10' nuevamente.
+    movwf contador10segundos    
     call obtenerCont
     call actualizarDir
-    banksel contDir
+    banksel contDir	     ;Se muestra contDir en los LEDS
     movf contDir,w
     banksel PORTD
     movwf PORTD
@@ -268,22 +270,22 @@ pasaron10s
     
 ;    
 ;;    call escribir
-    movlw d'1'
+    movlw d'1'		    ;Le suma uno a contDir y lo guarda en w
     banksel contDir
     addwf contDir
     movf contDir,w
     call guardarCont
     goto terminar
     
-bajarEscritura
+bajarEscritura	; Baja el flag de Interrupcion de Escritura
     bcf PIR2,EEIF
     goto terminar
     
     
 escribir
-    banksel EEADR
+    banksel EEADR	; Coloca la direccion de escritura en EEADR
     movwf EEADR
-    banksel datoGuardar
+    banksel datoGuardar	; Coloco el dato a escribir (datoGuardar) en EEDAT
     movf datoGuardar,w
     banksel EEDAT
     movwf EEDAT
@@ -311,19 +313,19 @@ escribir
     
     
 leer
-    banksel EEADR
+    banksel EEADR	; Coloca la direccion a leer en EEADR
     movwf EEADR
     banksel EECON1
     bcf EECON1,EEPGD
     bsf EECON1,RD
-    banksel EEDAT
+    banksel EEDAT	; Guarda el dato recien leido en W
     movf EEDAT,w
     return
     
     
-obtenerDireccion    
+obtenerDireccion    ; Obtiene la direccion correspondiente para el buffer circular
     banksel PCL
-;    ADDWF PCL
+;   ADDWF PCL
     retlw 0x10
     retlw 0x11
     retlw 0x12
@@ -343,7 +345,7 @@ actualizarDir
     call resetearCont
     return
     
-obtenerCont1EraVez
+obtenerCont1EraVez ; Ejecuta al inicio del programa
     banksel direccionDirMemoria
     movf direccionDirMemoria,w
     call leer
@@ -354,30 +356,31 @@ obtenerCont1EraVez
     movf temp,w
     return
     
-obtenerCont
+obtenerCont ; Lee de la EEPROM la direccion dada por 'direccionDirMemoria'
     banksel direccionDirMemoria
     movf direccionDirMemoria,w
     call leer
-    movwf contDir
+    movwf contDir ; Guarda e en contDir al finalizar la lectura
     return
 
 guardarCont
-    banksel contDir
-    movf contDir,w
-    banksel datoGuardar
-    movwf datoGuardar
-    banksel direccionDirMemoria
+    banksel contDir ; 
+    movf contDir,w  ;	
+    banksel datoGuardar; Guarda contDir en W y luego lo coloca en datoGuardar
+    movwf datoGuardar;
+    
+    banksel direccionDirMemoria ; Guarda direccionDirMemoria en W y llama a escribir.
     movf direccionDirMemoria,w
     call escribir
     return
     
-esMayorQue10
+esMayorQue10 ; Funcion que de ser llamada, resetea el contDir, luego llama a guardar
     call resetearCont
     call guardarCont
     movf contDir,w
     return
 
-resetearCont
+resetearCont ; "Resetea" el contDir, dejandolo en 0 decimal.
     banksel contDir
     movlw d'0'
     movwf contDir
