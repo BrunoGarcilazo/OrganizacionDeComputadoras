@@ -23,7 +23,6 @@ cblock 0x20	;Comienzo a escribir la memoria de datos en la direcci√≥n 0x20
     datoGuardar ; Variable que sera utilizada para almacenar el dato a guardarse en EEPROM
     contDir
     direccionDirMemoria
-    direccion
     contadorH
     
 endc
@@ -56,8 +55,8 @@ eusart_baud_rate
     return
 
 main
-    movlw d'10'	    ; Movemos el decimal 10 a w
-    banksel contador10segundos	; Movemos d'10' a contador10segundos
+    movlw d'100'	    ; Movemos el decimal 100 a w
+    banksel contador10segundos	; Movemos d'100' a contador10segundos
     movwf contador10segundos
     
     movlw 0xFF		
@@ -81,8 +80,9 @@ main
     movlw d'129'
     call eusart_baud_rate
     call eusart_init
-    call configurarTMR1
     call obtenerCont1EraVez
+    call configurarTMR1
+    
     
     
 loop
@@ -96,21 +96,33 @@ loop
 
     
 verificoInput	; Verifica el dato recibid
+    movlw 0x0A
+    call enviar ; Envia \n
     banksel RCREG
     movf RCREG,w	
     sublw 0x41 ; A
     btfsc STATUS,Z ; Si la resta dio 0 (bit en 1), se llamara a mostrarConversion
-    call mostrarConversion
+    call mostrarA
     ;Si la resta no dio 0 es porque RCREG no es 'A'
     movf RCREG,w
     sublw 0x48 ; H
     btfsc STATUS,Z ; Verifica si RCREG era H
     call mostrarH  ; Era H, llamo a mostrarH
-    goto loop	   ; Si no era A ni H, vuelvo a loop
+    movf RCREG,w
+    sublw 0x61 ; a
+    btfsc STATUS,Z ; Verifica si RCREG era a
+    call mostrarGrados  ; Era a, llamo a mostrarGrados
+    movlw 0x0A
+    call enviar ; Envia \n
+    goto loop	   ; Si no era A ni H ni a, vuelvo a loop
     
-
+mostrarA
+    banksel datoGuardar
+    movf datoGuardar,w
+    call mostrarConversion
+    return
 mostrarH
-    movlw d'11'
+    movlw d'10'
     movwf contadorH
     banksel contDir
     movf contDir,w
@@ -120,20 +132,22 @@ mostrarH
     movwf temp
     
 seguirMostrando
-    decfsz contadorH
-    goto $+2
-    goto loop
     movf temp,w
     call obtenerDireccion
-    movwf direccion
+    call leer
     call mostrarConversion
+    movlw 0x0A
+    call enviar ; Envia \n
     movlw d'1'
     addwf temp
     movf temp,w
     sublw d'10'
     btfsc STATUS,Z
     movwf temp
+    decfsz contadorH
     goto seguirMostrando
+    goto loop
+    
     
    
 obtenerAD  ; Obtiene el dato devuelto por el conversor A/D
@@ -146,9 +160,6 @@ obtenerAD  ; Obtiene el dato devuelto por el conversor A/D
     return
     
 mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG (lo envia a la PC)
-    movf direccion,w ; 
-    call leer
-    
     banksel primerLetra
     movwf primerLetra
     banksel segundaLetra
@@ -172,7 +183,8 @@ mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG 
     movf segundaLetra,w
     call conversionNumero
     movwf segundaLetra
-   
+    
+    
     call mostrarLetras ; Una vez se tiene el dato deseado, se envian a la PC
     
     return
@@ -187,8 +199,7 @@ mostrarLetras    ; Envia las letras correspondientes, luego envia '\n'
     movf primerLetra,w
     call enviar ; Envia primeraLetra
     
-    movlw 0x0A
-    call enviar ; Envia \n
+    
     return
     
 enviar ; Envia lo guardado en w a la PC (lo coloca en TXREG)
@@ -292,16 +303,16 @@ actualizarTimer ; Vuelve a "setear" los valores 0x0BDC en el Timer1
 
     
 pasaron10s
-    movlw d'10'		     ;Se coloca d'10' nuevamente.
+    movlw d'100'		     ;Se coloca d'100' nuevamente.
     movwf contador10segundos    
     call obtenerCont
     call obtenerDireccion
-    banksel direccion
-    movwf direccion
-    call leer
+    call escribir
+    banksel datoGuardar
+    movf datoGuardar,w
     banksel PORTD
     movwf PORTD
-;    call mostrarConversion
+    
     movlw d'1'		    ;Le suma uno a contDir y lo guarda en w
     banksel contDir
     addwf contDir
@@ -407,5 +418,59 @@ resetearCont ; "Resetea" el contDir, dejandolo en 0 decimal.
     movlw d'0'
     movwf contDir
     return
-
+    
+mostrarGrados
+    banksel datoGuardar
+    movf datoGuardar,w
+    
+    banksel temp
+    movwf temp
+    rrf temp,f
+    
+    movlw b'01111111'
+    andwf temp,f
+    movf temp,w
+    
+    banksel primerLetra
+    movwf primerLetra
+    banksel segundaLetra
+    movwf segundaLetra
+    
+    
+    banksel primerLetra
+    movlw b'00001111'
+    andwf primerLetra,f
+    
+    banksel segundaLetra
+    movlw b'11110000'
+    andwf segundaLetra,f
+    swapf segundaLetra
+    
+    
+    movlw d'10'
+    subwf primerLetra,w
+    btfsc STATUS,C
+    call subirSegundaLetra
+    
+    swapf segundaLetra,f
+    
+    movf primerLetra,w
+    iorwf segundaLetra,w
+    
+;    banksel PORTD
+;    movwf PORTD
+    call mostrarConversion
+    movlw 0x2A
+    call enviar ; Envia ∞
+    movlw 0x43
+    call enviar ; Envia C
+    return
+    
+    
+subirSegundaLetra
+    banksel segundaLetra
+    incf segundaLetra
+    movlw d'0'
+    movwf primerLetra
+    return
 end
