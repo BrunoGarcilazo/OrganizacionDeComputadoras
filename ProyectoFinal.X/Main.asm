@@ -131,54 +131,54 @@ verificoInput	; Verifica el dato recibid
     movlw 0x0A
     call enviar ; Envia \n
     banksel flag
-    btfsc flag,1
-    goto loop
+    btfsc flag,1    ; Se testea si el flag esta seteado (se recibio un dato valido)
+    goto loop	    ; Si el test dio 1: es porque se recibio "A","H" o "a" y ya se mostraron datos en el PC, por lo tanto se vuelve a loop
     banksel flag
     bsf flag,0
-    bcf flag,1
-    call mal
+    bcf flag,1	    ; Se realiza clear del bit 1 del flag
+    call mal	    ; Como no se recibio ningun dato valido, se reproduce el sonido reprobatorio.
     goto loop	   ; Si no era A ni H ni a, vuelvo a loop
     
-mostrarA
-    banksel flag
+mostrarA	   ; Funcion que se encarga de mostrar el dato actual de temperatura en la PC
+    banksel flag   ; Se setea el flag, para indicar que se ha recibido un dato valido ("A" en este caso) del PC
     bsf flag,0
     bsf flag,1
-    call bien
-    banksel datoGuardar
+    call bien	   ; Se reproduce el sonido aprobatorio 
+    banksel datoGuardar	; Se guarda datoGuardar en w
     movf datoGuardar,w
-    call mostrarConversion
+    call mostrarConversion  ; Se llama a mostrarConversion con datoGuardar en W, para enviar ese dato al PC
     return
     
-mostrarH
+mostrarH    ; Funcion utilizada para mostrar los datos cuando se envia "H" desde el PC.
     banksel flag
-    bsf flag,0
+    bsf flag,0	; Se "setea" el flag utilizado para saber si el dato recibido desde la PC es uno de los caracteres admitidos ('A', 'H' o 'a')
     bsf flag,1
-    call bien
+    call bien	; Llama a la funcion para reproducir el sonido de aprobacion
     movlw d'10'
-    movwf contadorH
+    movwf contadorH ; Se guarda el decimal 10 en contadorH
     banksel contDir
-    movf contDir,w
-    movwf temp
-    sublw d'10'
-    btfsc STATUS,Z
-    movwf temp
+    movf contDir,w ; Se guarda contDir en W
+    movwf temp	   ; Se guarda W en temp
+    sublw d'10'	   ; Se le resta 10 a W
+    btfsc STATUS,Z 
+    movwf temp	   ; Si la resta no dio 0, se guarda W en temp
     
 seguirMostrando
     movf temp,w
-    call obtenerDireccion
-    call leer
-    call mostrarConversion
+    call obtenerDireccion ; Obtiene la direccion correspondiente
+    call leer		  ; Lee de la direccion obtenida
+    call mostrarConversion; Muestra la conversion de los datos obtenidos en la lectura
     movlw 0x0A
     call enviar ; Envia \n
     movlw d'1'
     addwf temp
     movf temp,w
     sublw d'10'
-    btfsc STATUS,Z
+    btfsc STATUS,Z ; Utiliza el contador para mostrar todas las temperaturas registradas en la EEPROM
     movwf temp
     decfsz contadorH
-    goto seguirMostrando
-    goto loop
+    goto seguirMostrando ; Vuelve a obtener la direccion, leer y luego mostrar.
+    goto loop		 ; Si ya termino de mostrar los 10 datos.
     
     
    
@@ -208,12 +208,12 @@ mostrarConversion        ; Tomar el dato del Conversor A/D y colocarlo en TXREG 
     
     banksel primerLetra	  ; Mueve primeraLetra a W y llama a conversionNumero, guarda el resultado en W.
     movf primerLetra,w
-    call conversionNumero
+    call conversionNumero ; Convierte primerLetra a su ASCII
     movwf primerLetra
 
     banksel segundaLetra
     movf segundaLetra,w
-    call conversionNumero
+    call conversionNumero ; Convierte segundaLetra a su ASCII
     movwf segundaLetra
     
     
@@ -276,7 +276,7 @@ conversionNumero ; Convierte un numero en hexa a su correspondiente en ASCII (0 
     retlw 0x45
     retlw 0x46
     
-mal
+mal ; Funcion para hacer sonar el buzzer con sonido "reprobatorio"
     call Delay3ms
     banksel flag
     btfss flag,0
@@ -287,7 +287,7 @@ mal
     call ponerUno
     goto mal
     
-bien
+bien ; Funcion para hacer sonar el buzzer con sonido "aprobatorio"
     call Delay1ms
     banksel flag
     btfss flag,0
@@ -299,7 +299,7 @@ bien
     goto bien
     
 
-Delay
+Delay	; Delay
 			;2493 cycles
 	movlw	0xF2
 	movwf	d0
@@ -318,10 +318,10 @@ Delay_0
 			;4 cycles (including call)
 	return
 	
-Delay1ms
+Delay1ms ; Delay de 1ms
     call Delay
     return
-Delay3ms
+Delay3ms ; Delay multiple, para obtener 3ms
     call Delay
     call Delay
     call Delay
@@ -359,9 +359,9 @@ interrupt
     call actualizarTimer
     
     
-unSegundo
+unSegundo 
     banksel sonar1S
-    decfsz sonar1S
+    decfsz sonar1S ; Decrementa sonar1S. Si se llega a 0, se vuelve a setear en 10 a sonar1S y hace clear de flag. Sino realiza un return y vuelve a la rutina anterior.
     return
     movlw d'10'
     movwf sonar1S
@@ -416,8 +416,8 @@ bajarEscritura	; Baja el flag de Interrupcion de Escritura
     goto terminar
     
     
-escribir
-    banksel EEADR	; Coloca la direccion de escritura en EEADR
+escribir ; Escribe un dato (datoGuardar) en la EEPROM (direccion guardada en w)
+    banksel EEADR	; Coloca la direccion de escritura (previamente guardada en w) en EEADR 
     movwf EEADR
     banksel datoGuardar	; Coloco el dato a escribir (datoGuardar) en EEDAT
     movf datoGuardar,w
@@ -444,11 +444,13 @@ escribir
     banksel EECON1
     bcf EECON1,WREN
     return
-ponerCero
+    
+ponerCero   ; Apaga el Buzzer
     banksel PORTC
     bcf PORTC, 0
     return
-ponerUno
+    
+ponerUno    ; Enciende el Buzzer
     banksel PORTC
     bsf PORTC, 0
     return
@@ -481,8 +483,8 @@ obtenerCont1EraVez ; Ejecuta al inicio del programa
     call leer
     movwf temp
     sublw d'10'
-    btfss STATUS,C
-    goto esMayorQue10
+    btfss STATUS,C	; Verifica si direccionDirMemoria es mayor o menos a 10.
+    goto esMayorQue10	; El bitTest resulto que no hay Carry, por lo tanto temp es > 10
     movf temp,w
     return
     
@@ -517,57 +519,56 @@ resetearCont ; "Resetea" el contDir, dejandolo en 0 decimal.
     movwf contDir
     return
     
-mostrarGrados
+mostrarGrados ; Funcion para convertir el dato recibido en un decimal
     banksel flag
     bsf flag,0
-    bsf flag,1
-    call bien
+    bsf flag,1 ; Setea el flag en 1 para indicar que se recibio un dato correcto ("a" en este caso) por el puerto serial.
+    call bien  ; Reproduce el sonido aprobatorio
     banksel datoGuardar
-    movf datoGuardar,w
+    movf datoGuardar,w	; Guarda datoGuardar en W
     
-    banksel temp
+    banksel temp ; Mueve datoGuardar a temp
     movwf temp
-    rrf temp,f
+    rrf temp,f	 ; Rota temp (datoGuardar)
     
     movlw b'01111111'
-    andwf temp,f
-    movf temp,w
+    andwf temp,f ; Realiza un and con temp para obtener la "primeraLetra"
+    movf temp,w  ; Mueve el resultado (guardado en temp) en w
     
     
-    banksel primerLetra
-    movwf primerLetra
-    banksel segundaLetra
+    banksel primerLetra ; Coloca W en primeraLetra
+    movwf primerLetra				   ; Mismo W
+    banksel segundaLetra ; Coloca W en segundaLetra
     movwf segundaLetra
     
     
     banksel primerLetra
     movlw b'00001111'
-    andwf primerLetra,f
+    andwf primerLetra,f ; Se obtiene el nibble menos significativo
     
     banksel segundaLetra
     movlw b'11110000'
-    andwf segundaLetra,f
+    andwf segundaLetra,f ; Se obtiene el nibble mas significativo
     swapf segundaLetra
     
     
     movlw d'10'
-    subwf primerLetra,w
+    subwf primerLetra,w ; Le resta 10 a primeraLetra y verifica hay carry (primeraLetra < 10)
     btfsc STATUS,C
-    call subirSegundaLetra
+    call subirSegundaLetra ; Si da Carry, se incrementa la "SegundaLetra"
     
     swapf segundaLetra,f
-    
     movf primerLetra,w
-    iorwf segundaLetra,w
+    iorwf segundaLetra,w  ; Une los nibbles en un dato unico y lo coloca en w
     
-    call mostrarConversion
+    call mostrarConversion ; Muestra el dato "transformado" en un decimal.
     movlw 0xb0
     call enviar ; Envia °
     movlw 0x43
     call enviar ; Envia C
     return
     
-subirSegundaLetra
+subirSegundaLetra   ; Incrementa segundaLetra y coloca d'0' en primeraLetra
     banksel segundaLetra
     incf segundaLetra
     movlw d'0'
