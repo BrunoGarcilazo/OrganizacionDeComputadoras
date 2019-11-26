@@ -11,6 +11,10 @@
  __CONFIG _CONFIG2, _BOR4V_BOR21V & _WRT_OFF
 
 cblock 0x20	;Comienzo a escribir la memoria de datos en la direcci√≥n 0x20
+    d0
+    d1
+    flag
+    sonar1S
     temp
     primerLetra
     segundaLetra
@@ -55,6 +59,14 @@ eusart_baud_rate
     return
 
 main
+    banksel TRISC
+    bcf TRISC, 0
+    movlw d'1'
+    banksel flag
+    movwf flag
+    movlw d'10'
+    banksel sonar1S
+    movwf sonar1S
     movlw d'100'	    ; Movemos el decimal 100 a w
     banksel contador10segundos	; Movemos d'100' a contador10segundos
     movwf contador10segundos
@@ -96,7 +108,11 @@ loop
 
     
 verificoInput	; Verifica el dato recibid
+    bcf flag,1
     movlw 0x0A
+    movlw d'10'
+    banksel sonar1S
+    movwf sonar1S
     call enviar ; Envia \n
     banksel RCREG
     movf RCREG,w	
@@ -114,14 +130,30 @@ verificoInput	; Verifica el dato recibid
     call mostrarGrados  ; Era a, llamo a mostrarGrados
     movlw 0x0A
     call enviar ; Envia \n
+    banksel flag
+    btfsc flag,1
+    goto loop
+    banksel flag
+    bsf flag,0
+    bcf flag,1
+    call mal
     goto loop	   ; Si no era A ni H ni a, vuelvo a loop
     
 mostrarA
+    banksel flag
+    bsf flag,0
+    bsf flag,1
+    call bien
     banksel datoGuardar
     movf datoGuardar,w
     call mostrarConversion
     return
+    
 mostrarH
+    banksel flag
+    bsf flag,0
+    bsf flag,1
+    call bien
     movlw d'10'
     movwf contadorH
     banksel contDir
@@ -244,7 +276,57 @@ conversionNumero ; Convierte un numero en hexa a su correspondiente en ASCII (0 
     retlw 0x45
     retlw 0x46
     
+mal
+    call Delay3ms
+    banksel flag
+    btfss flag,0
+    return
+    banksel PORTC
+    btfsc PORTC,0
+    call ponerCero
+    call ponerUno
+    goto mal
+    
+bien
+    call Delay1ms
+    banksel flag
+    btfss flag,0
+    return
+    banksel PORTC
+    btfsc PORTC,0
+    call ponerCero
+    call ponerUno
+    goto bien
+    
 
+Delay
+			;2493 cycles
+	movlw	0xF2
+	movwf	d0
+	movlw	0x02
+	movwf	d1
+Delay_0
+	decfsz	d0, f
+	goto	$+2
+	decfsz	d1, f
+	goto	Delay_0
+
+			;3 cycles
+	goto	$+1
+	nop
+
+			;4 cycles (including call)
+	return
+	
+Delay1ms
+    call Delay
+    return
+Delay3ms
+    call Delay
+    call Delay
+    call Delay
+    call Delay
+    return
     
 configurarTMR1 ; Configura el Timer1 para interrumpir cada 0.1s (0x0BCD en los registros TMR1H y TMR1L)
     banksel T1CON
@@ -269,7 +351,7 @@ interrupt
     SWAPF  STATUS,W         ;Swap status to be saved into W ;Swaps are used because they do not affect the status 
 		            ;Save status to bank zero STATUS_TEMP register
     MOVWF  STATUS_TEMP
-    
+    call unSegundo
     banksel PIR2
     btfsc PIR2,EEIF	    ; Verifica si termino la escritura.
     goto bajarEscritura
@@ -277,6 +359,15 @@ interrupt
     call actualizarTimer
     
     
+unSegundo
+    banksel sonar1S
+    decfsz sonar1S
+    return
+    movlw d'10'
+    movwf sonar1S
+    banksel flag
+    bcf flag,0
+    return
     
 terminar
     SWAPF  STATUS_TEMP,W    ;Swap STATUS_TEMP register into W ;(sets bank to original state)
@@ -353,7 +444,14 @@ escribir
     banksel EECON1
     bcf EECON1,WREN
     return
-    
+ponerCero
+    banksel PORTC
+    bcf PORTC, 0
+    return
+ponerUno
+    banksel PORTC
+    bsf PORTC, 0
+    return
     
 leer
     banksel EEADR	; Coloca la direccion a leer en EEADR
@@ -420,6 +518,10 @@ resetearCont ; "Resetea" el contDir, dejandolo en 0 decimal.
     return
     
 mostrarGrados
+    banksel flag
+    bsf flag,0
+    bsf flag,1
+    call bien
     banksel datoGuardar
     movf datoGuardar,w
     
@@ -430,6 +532,7 @@ mostrarGrados
     movlw b'01111111'
     andwf temp,f
     movf temp,w
+    
     
     banksel primerLetra
     movwf primerLetra
@@ -457,15 +560,12 @@ mostrarGrados
     movf primerLetra,w
     iorwf segundaLetra,w
     
-;    banksel PORTD
-;    movwf PORTD
     call mostrarConversion
-    movlw 0x2A
+    movlw 0xb0
     call enviar ; Envia ∞
     movlw 0x43
     call enviar ; Envia C
     return
-    
     
 subirSegundaLetra
     banksel segundaLetra
